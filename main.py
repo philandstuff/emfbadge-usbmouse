@@ -3,6 +3,8 @@
 ### Category: Other
 ### License: GPLv3
 ### Appname: USB Mouse
+### reboot-before-run: True
+### USB-mode: VCP+HID
 
 import pyb
 import buttons
@@ -11,48 +13,7 @@ from os import sep, remove
 from imu import IMU
 
 
-START = '# Mouse mode <'
-INSERT_AFTER = 'm = "apps/home/main.py"'
-BOOT_FILE = 'boot.py'
-APP_DIR = 'apps/bcaller~usbmouse'
 TILT_SENSITIVITY = 25
-INSERT = '''
-
-        import buttons
-        buttons.init(['BTN_B'])
-        if buttons.is_pressed('BTN_B'):
-            pyb.usb_mode('VCP+HID')
-            m = "%s/main.py"
-# > Mouse mode
-''' % APP_DIR
-
-
-def is_installed():
-    with open(BOOT_FILE) as f:
-        for line in f.readlines():
-            if START in line:
-                return True
-    return False
-
-
-def install():
-    tmp_file = BOOT_FILE + '.tmp'
-    with open(BOOT_FILE) as original:
-        with open(tmp_file, 'w') as tempfile:
-            # Make modified boot.py
-            for line in original.readlines():
-                tempfile.write(line)
-                if INSERT_AFTER in line:
-                    tempfile.write(START)
-                    tempfile.write(INSERT)                    
-    # Overwrite old boot.py
-    # This is necessary as pyb.usb_mode must be called inside boot.py
-    # The usb_mode cannot be changed after pyb.main
-    with open(tmp_file) as tempfile:
-        with open(BOOT_FILE, 'w') as bootfile:
-            for line in tempfile.readlines():
-                bootfile.write(line)
-    remove(tmp_file)
 
 
 def click():
@@ -89,9 +50,7 @@ if 'HID' in pyb.usb_mode():
 else:
     # Not a HID, press B and reset
     ugfx.area(0, 0, ugfx.width(), ugfx.height(), ugfx.BLACK)
-    if not is_installed():
-        install()
-    ugfx.text(30, 30, "Hold B to restart in mouse mode", ugfx.html_color(0xFF7C11))
+    ugfx.text(30, 30, "Error, not in HID mode. Press B to reset.", ugfx.html_color(0xFF7C11))
     while True:
         if buttons.is_pressed('BTN_B'):
             pyb.hard_reset()
